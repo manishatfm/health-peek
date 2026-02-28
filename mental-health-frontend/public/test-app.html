@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Status Check</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .test-section {
+            margin: 25px 0;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+        .test-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 12px;
+            margin-left: auto;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .result pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            margin: 10px 0;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .success-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .error-box {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 Health Peek - App Status</h1>
+        <p class="subtitle">Test both voice recognition and text analysis features</p>
+
+        <!-- Backend Test -->
+        <div class="test-section">
+            <h2>
+                🔧 Backend Status
+                <span id="backendStatus" class="status pending">Not Tested</span>
+            </h2>
+            <button onclick="testBackend()">Test Backend Connection</button>
+            <div id="backendResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Voice Recognition Test -->
+        <div class="test-section">
+            <h2>
+                🎤 Voice Recognition
+                <span id="voiceStatus" class="status pending">Not Tested</span>
+            </h2>
+            <button onclick="testVoice()">Test Voice</button>
+            <button id="voiceStartBtn" onclick="startVoice()" style="display:none;">🎤 Start Speaking</button>
+            <button id="voiceStopBtn" onclick="stopVoice()" style="display:none;">⏹️ Stop</button>
+            <div id="voiceResult" class="result" style="display:none;"></div>
+            <textarea id="voiceTranscript" rows="3" placeholder="Your speech will appear here..." style="display:none;"></textarea>
+        </div>
+
+        <!-- Text Analysis Test -->
+        <div class="test-section">
+            <h2>
+                📝 Text Analysis
+                <span id="analysisStatus" class="status pending">Not Tested</span>
+            </h2>
+            <textarea id="testMessage" rows="3" placeholder="Enter a message to analyze (e.g., 'I feel great today!')">I feel great today!</textarea>
+            <button onclick="testAnalysis()">Analyze Message</button>
+            <div id="analysisResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="info-box">
+            <strong>💡 Important:</strong> Voice recognition is optional! If it doesn't work (due to firewall, VPN, or browser), you can still use text analysis which is the main feature.
+        </div>
+    </div>
+
+    <script>
+        let recognition = null;
+        const API_URL = 'http://localhost:8000';
+
+        // Test Backend
+        async function testBackend() {
+            const statusEl = document.getElementById('backendStatus');
+            const resultEl = document.getElementById('backendResult');
+            
+            statusEl.textContent = 'Testing...';
+            statusEl.className = 'status pending';
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = '⏳ Connecting to backend...';
+            
+            try {
+                const response = await fetch(`${API_URL}/docs`);
+                if (response.ok) {
+                    statusEl.textContent = '✅ Online';
+                    statusEl.className = 'status success';
+                    resultEl.innerHTML = `
+                        <div class="success-box">
+                            <strong>✅ Backend is running!</strong><br>
+                            API URL: ${API_URL}<br>
+                            Status: ${response.status} ${response.statusText}
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                statusEl.textContent = '❌ Offline';
+                statusEl.className = 'status error';
+                resultEl.innerHTML = `
+                    <div class="error-box">
+                        <strong>❌ Backend not responding!</strong><br>
+                        Error: ${error.message}<br><br>
+                        <strong>Fix:</strong> Make sure backend is running:<br>
+                        <code>cd mental-health-backend && python -m uvicorn main:app --reload --port 8000</code>
+                    </div>
+                `;
+            }
+        }
+
+        // Test Voice Recognition
+        function testVoice() {
+            const statusEl = document.getElementById('voiceStatus');
+            const resultEl = document.getElementById('voiceResult');
+            const startBtn = document.getElementById('voiceStartBtn');
+            const transcript = document.getElementById('voiceTranscript');
+            
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = '⏳ Checking voice recognition...';
+            
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+                
+                recognition.onresult = (event) => {
+                    const text = event.results[0][0].transcript;
+                    transcript.value = text;
+                    resultEl.innerHTML = `
+                        <div class="success-box">
+                            <strong>✅ Voice recognition working!</strong><br>
+                            You said: "${text}"
+                        </div>
+                    `;
+                };
+                
+                recognition.onerror = (event) => {
+                    statusEl.textContent = '❌ Error';
+                    statusEl.className = 'status error';
+                    resultEl.innerHTML = `
+                        <div class="error-box">
+                            <strong>❌ Voice recognition error: ${event.error}</strong><br><br>
+                            ${event.error === 'network' ? 
+                                'This is usually caused by firewall/VPN blocking Google\'s speech service.<br><strong>Solution:</strong> Use text input instead!' :
+                                event.error === 'not-allowed' ?
+                                'Microphone permission denied.<br><strong>Solution:</strong> Allow microphone in browser settings.' :
+                                'Voice recognition not available.<br><strong>Solution:</strong> Use text input instead!'}
+                        </div>
+                    `;
+                };
+                
+                statusEl.textContent = '✅ Available';
+                statusEl.className = 'status success';
+                startBtn.style.display = 'inline-block';
+                transcript.style.display = 'block';
+                resultEl.innerHTML = `
+                    <div class="info-box">
+                        <strong>✅ Voice recognition is available!</strong><br>
+                        Click "Start Speaking" to test it.
+                    </div>
+                `;
+            } else {
+                statusEl.textContent = '❌ Not Supported';
+                statusEl.className = 'status error';
+                resultEl.innerHTML = `
+                    <div class="error-box">
+                        <strong>❌ Voice recognition not supported in this browser.</strong><br>
+                        <strong>Solution:</strong> Use Chrome, Edge, or Safari. Or just use text input!
+                    </div>
+                `;
+            }
+        }
+
+        function startVoice() {
+            if (recognition) {
+                const startBtn = document.getElementById('voiceStartBtn');
+                const stopBtn = document.getElementById('voiceStopBtn');
+                const resultEl = document.getElementById('voiceResult');
+                
+                try {
+                    recognition.start();
+                    startBtn.style.display = 'none';
+                    stopBtn.style.display = 'inline-block';
+                    resultEl.innerHTML = '<div class="info-box"><strong>🎤 Listening...</strong> Speak now!</div>';
+                } catch (error) {
+                    resultEl.innerHTML = `<div class="error-box">Error: ${error.message}</div>`;
+                }
+            }
+        }
+
+        function stopVoice() {
+            if (recognition) {
+                recognition.stop();
+                document.getElementById('voiceStartBtn').style.display = 'inline-block';
+                document.getElementById('voiceStopBtn').style.display = 'none';
+            }
+        }
+
+        // Test Text Analysis
+        async function testAnalysis() {
+            const message = document.getElementById('testMessage').value.trim();
+            const statusEl = document.getElementById('analysisStatus');
+            const resultEl = document.getElementById('analysisResult');
+            
+            if (!message) {
+                alert('Please enter a message to analyze!');
+                return;
+            }
+            
+            statusEl.textContent = 'Testing...';
+            statusEl.className = 'status pending';
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = '⏳ Analyzing message...';
+            
+            try {
+                // First check if backend is running
+                const healthCheck = await fetch(`${API_URL}/docs`).catch(() => null);
+                if (!healthCheck || !healthCheck.ok) {
+                    throw new Error('Backend not running. Please start the backend server first.');
+                }
+                
+                // Note: This endpoint requires authentication in production
+                // For testing, we're calling it directly
+                const response = await fetch(`${API_URL}/analysis/analyze`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                if (response.status === 401) {
+                    statusEl.textContent = '⚠️ Auth Required';
+                    statusEl.className = 'status error';
+                    resultEl.innerHTML = `
+                        <div class="error-box">
+                            <strong>⚠️ Authentication Required</strong><br>
+                            The API requires login. Please use the main app at <a href="http://localhost:3000" target="_blank">localhost:3000</a> to test with authentication.
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                if (data.sentiment) {
+                    statusEl.textContent = '✅ Working';
+                    statusEl.className = 'status success';
+                    resultEl.innerHTML = `
+                        <div class="success-box">
+                            <strong>✅ Analysis Complete!</strong><br><br>
+                            <strong>Message:</strong> "${data.message}"<br>
+                            <strong>Sentiment:</strong> ${data.sentiment}<br>
+                            <strong>Confidence:</strong> ${(data.confidence * 100).toFixed(1)}%<br>
+                            <strong>Emotions:</strong> ${JSON.stringify(data.emotions, null, 2)}
+                        </div>
+                    `;
+                } else {
+                    throw new Error('Unexpected response format');
+                }
+            } catch (error) {
+                statusEl.textContent = '❌ Error';
+                statusEl.className = 'status error';
+                resultEl.innerHTML = `
+                    <div class="error-box">
+                        <strong>❌ Analysis failed!</strong><br>
+                        Error: ${error.message}<br><br>
+                        <strong>Solutions:</strong><br>
+                        1. Make sure backend is running on port 8000<br>
+                        2. Use the main app at <a href="http://localhost:3000" target="_blank">localhost:3000</a> for authenticated access
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-test backend on load
+        window.addEventListener('load', () => {
+            testBackend();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,188 @@
+.analysis-history {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.analysis-history h3 {
+  margin: 0 0 1rem 0;
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.history-item {
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  transition: all 0.2s ease;
+}
+
+.history-item:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Delete button styles temporarily removed
+.history-delete-btn {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 0.25rem 0.5rem;
+  color: #9ca3af;
+  transition: color 0.15s ease;
+}
+
+.history-delete-btn:hover {
+  color: #ef4444;
+}
+*/
+
+.sentiment-icon {
+  font-size: 1.25rem;
+}
+
+.sentiment-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.confidence-score {
+  padding: 0.25rem 0.5rem;
+  background: #f3f4f6;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.source-badge {
+  padding: 0.25rem 0.5rem;
+  background: #dbeafe;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  margin-left: auto;
+  cursor: help;
+}
+
+.history-message {
+  margin: 0.5rem 0;
+  color: #374151;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 4px;
+  border-left: 3px solid #e5e7eb;
+}
+
+.history-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.timestamp {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.emotions-count {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.empty-history {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+.empty-history p {
+  margin: 0;
+  font-style: italic;
+}
+
+.history-footer {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.history-footer small {
+  color: #9ca3af;
+}
+
+.show-more-button {
+  padding: 0.5rem 1rem;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.show-more-button:hover {
+  background: #e5e7eb;
+  border-color: #d1d5db;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .analysis-history {
+    margin-top: 1rem;
+    padding: 1rem;
+  }
+  
+  .history-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .history-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}
+
+/* Loading and error states */
+.analysis-history .loading-spinner,
+.analysis-history .error-message {
+  margin: 2rem 0;
+}

@@ -1,0 +1,284 @@
+.suggestion-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 255, 0.95));
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(31, 38, 135, 0.12), 
+              0 3px 8px rgba(0, 0, 0, 0.05),
+              inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: all 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.suggestion-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.7s ease;
+}
+
+.suggestion-card:hover::after {
+  left: 100%;
+}
+
+.suggestion-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 50px rgba(31, 38, 135, 0.2), 
+              0 8px 20px rgba(0, 0, 0, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.suggestion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.suggestion-header h3 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.1rem;
+}
+
+.ai-badge {
+  background: linear-gradient(45deg, #4a90e2, #845ec2);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ai-badge::before {
+  content: "⚡";
+  font-size: 0.8rem;
+}
+
+.suggestion-card p {
+  color: #4b5563;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.suggestion-footer {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.priority-badge {
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.priority-badge.critical {
+  background-color: #fee2e2;
+  color: #991b1b;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.priority-badge.high {
+  background-color: #fecaca;
+  color: #dc2626;
+}
+
+.priority-badge.medium {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.priority-badge.low {
+  background-color: #e0e7ff;
+  color: #4f46e5;
+}
+
+/* Evidence-based intervention categories */
+.suggestion-card.cognitive-behavioral {
+  border-left: 4px solid #8b5cf6;
+}
+
+.suggestion-card.emotional-regulation {
+  border-left: 4px solid #06b6d4;
+}
+
+.suggestion-card.anxiety-management {
+  border-left: 4px solid #f59e0b;
+}
+
+.suggestion-card.depression-treatment {
+  border-left: 4px solid #3b82f6;
+}
+
+.suggestion-card.crisis-management,
+.suggestion-card.crisis-support {
+  border-left: 4px solid #dc2626;
+  background-color: #fef2f2;
+}
+
+.suggestion-card.professional-help {
+  border-left: 4px solid #b91c1c;
+  background-color: #fef2f2;
+}
+
+.suggestion-card.safety-planning {
+  border-left: 4px solid #991b1b;
+  background-color: #fee2e2;
+}
+
+.suggestion-card.positive-psychology {
+  border-left: 4px solid #10b981;
+}
+
+.suggestion-card.mindfulness {
+  border-left: 4px solid #8b5cf6;
+}
+
+.suggestion-card.lifestyle {
+  border-left: 4px solid #0ea5e9;
+}
+
+.suggestion-card.self-care {
+  border-left: 4px solid #14b8a6;
+}
+
+.suggestion-card.self-awareness {
+  border-left: 4px solid #6366f1;
+}
+
+.suggestion-card.creative-therapy {
+  border-left: 4px solid #ec4899;
+}
+
+.suggestion-card.exposure-therapy {
+  border-left: 4px solid #f97316;
+}
+
+.suggestion-card.breathing-techniques {
+  border-left: 4px solid #0891b2;
+}
+
+.suggestion-card.anger-management {
+  border-left: 4px solid #dc2626;
+}
+
+.suggestion-card.communication-skills {
+  border-left: 4px solid #7c3aed;
+}
+
+.suggestion-card.social-support {
+  border-left: 4px solid #059669;
+}
+
+.suggestion-card.acceptance-commitment,
+.suggestion-card.dialectical-behavioral {
+  border-left: 4px solid #6366f1;
+}
+
+.suggestion-card.values-based {
+  border-left: 4px solid #8b5cf6;
+}
+
+.suggestion-card.maintenance {
+  border-left: 4px solid #22c55e;
+}
+
+.suggestion-card.getting-started,
+.suggestion-card.guidance,
+.suggestion-card.education {
+  border-left: 4px solid #4f46e5;
+}
+
+.learn-more-btn {
+  margin-top: 16px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.learn-more-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: width 0.6s ease, height 0.6s ease;
+}
+
+.learn-more-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.learn-more-btn:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  transform: translateX(5px) scale(1.05);
+  box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5);
+}
+
+.learn-more-btn:disabled {
+  background: linear-gradient(135deg, #9ca3af, #6b7280);
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+}
+
+.learn-more-btn:disabled:hover {
+  transform: none;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+}
+
+.no-suggestions {
+  text-align: center;
+  padding: 32px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+.no-suggestions h3 {
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.no-suggestions p {
+  color: #6b7280;
+  margin: 0;
+}
