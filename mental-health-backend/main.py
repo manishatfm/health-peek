@@ -12,7 +12,7 @@ import logging
 # Import modules
 from app.core.config import settings
 from app.core.database import connect_to_mongo, close_mongo_connection
-from app.routers import auth, analysis, dashboard, blogs
+from app.routers import auth, analysis, dashboard, blogs, voice
 from app.services.sentiment_service import sentiment_service
 from app.utils.logging import setup_logging
 
@@ -33,6 +33,11 @@ async def lifespan(app: FastAPI):
         # Initialize AI models
         await sentiment_service.initialize()
         logger.info("AI models initialized")
+        
+        # Initialize voice/whisper model
+        from app.services.voice_service import voice_service
+        await voice_service.initialize()
+        logger.info("Voice (Whisper) model initialized")
         
     except Exception as e:
         logger.error(f"Startup failed: {e}")
@@ -80,6 +85,7 @@ app.include_router(auth.router)
 app.include_router(analysis.router)
 app.include_router(dashboard.router)
 app.include_router(blogs.router)
+app.include_router(voice.router)
 
 # Legacy endpoint compatibility
 @app.post("/analyze")

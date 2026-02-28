@@ -21,7 +21,8 @@ class AnalysisService:
             self.chat_analyses_collection = self.db.chat_analyses
     
     async def save_analysis(self, user_id: str, message: str, sentiment: str, 
-                          confidence: float, emotions: Dict, emoji_analysis: Optional[Dict] = None) -> str:
+                          confidence: float, emotions: Dict, emoji_analysis: Optional[Dict] = None,
+                          source: Optional[str] = None) -> str:
         """Save analysis result to database"""
         self._get_collections()
         
@@ -35,6 +36,8 @@ class AnalysisService:
             "timestamp": datetime.utcnow(),
             "created_at": datetime.utcnow()
         }
+        if source:
+            analysis_doc["source"] = source
         
         try:
             result = await self.analysis_collection.insert_one(analysis_doc)

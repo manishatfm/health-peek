@@ -3,12 +3,14 @@ import { authService } from './authService';
 import { analysisService } from './analysisService';
 import { dashboardService } from './dashboardService';
 import { blogService } from './blogService';
+import { voiceService } from './voiceService';
 
 // Export all services for easy importing
 export { authService } from './authService';
 export { analysisService } from './analysisService';
 export { dashboardService } from './dashboardService';
 export { blogService } from './blogService';
+export { voiceService } from './voiceService';
 export { ApiService } from './base';
 
 // Legacy ApiService class for backward compatibility
