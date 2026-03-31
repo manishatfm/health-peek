@@ -4,6 +4,7 @@ import { analysisService } from './analysisService';
 import { dashboardService } from './dashboardService';
 import { blogService } from './blogService';
 import { voiceService } from './voiceService';
+import { companionService } from './companionService';
 
 // Export all services for easy importing
 export { authService } from './authService';
@@ -11,6 +12,7 @@ export { analysisService } from './analysisService';
 export { dashboardService } from './dashboardService';
 export { blogService } from './blogService';
 export { voiceService } from './voiceService';
+export { companionService } from './companionService';
 export { ApiService } from './base';
 
 // Legacy ApiService class for backward compatibility

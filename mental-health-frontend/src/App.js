@@ -9,6 +9,7 @@ import { ErrorAlert } from './components/common';
 import { DashboardSkeleton, MoodTrendsSkeleton, SuggestionsSkeleton, ExportSkeleton } from './components/common/SkeletonLoader';
 import BlogView from './components/analysis/BlogView';
 import BlogPage from './components/analysis/BlogPage';
+import CompanionChat from './components/companion/CompanionChat';
 import SuggestionCard from './components/dashboard/SuggestionCard';
 import './App.css';
 
@@ -293,6 +294,13 @@ function AppContent() {
           Wellbeing Articles
         </button>
         <button 
+          className={activeSection === 'companion' ? 'nav-btn active' : 'nav-btn'}
+          onClick={() => setActiveSection('companion')}
+        >
+          <span className="nav-icon nav-icon-emoji">💬</span>
+          Companion Chat
+        </button>
+        <button 
           className={activeSection === 'export' ? 'nav-btn active' : 'nav-btn'}
           onClick={() => setActiveSection('export')}
         >
@@ -556,6 +564,8 @@ function AppContent() {
         return renderSuggestions();
       case 'blogs':
         return <BlogPage />;
+      case 'companion':
+        return <CompanionChat />;
       case 'export':
         return renderExport();
       default:

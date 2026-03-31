@@ -48,7 +48,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "./context/AuthContext";
 import { useAnalysis } from "./context/AnalysisContext";
 import { analysisService } from "./services";
-import { AnalysisHistory, ChatImport, ChatHistory } from "./components/analysis";
+import { AnalysisHistory, ChatImport, ChatHistory, VoiceAnalyzer } from "./components/analysis";
 import apiService from "./services/api";
 
 function ChatForm() {
@@ -352,7 +352,14 @@ function ChatForm() {
               Single Message
             </button>
             <button 
-              className={bulkMode ? 'mode-btn active' : 'mode-btn'}
+              className={bulkMode === 'voice' ? 'mode-btn active' : 'mode-btn'}
+              onClick={() => {setBulkMode('voice'); setResult(null); setError(null);}}
+              disabled={loading}
+            >
+              🎤 Voice Analysis
+            </button>
+            <button 
+              className={bulkMode === true ? 'mode-btn active' : 'mode-btn'}
               onClick={() => setBulkMode(true)}
               disabled={loading}
             >
@@ -380,7 +387,9 @@ function ChatForm() {
           </div>
         )}
 
-        {!bulkMode ? (
+        {bulkMode === 'voice' ? (
+          <VoiceAnalyzer />
+        ) : !bulkMode ? (
           <div className="single-analysis">
             <div className="input-section">
               <div className="input-header">
@@ -399,14 +408,6 @@ function ChatForm() {
                   className={`message-input ${isRecording ? 'recording' : ''}`}
                   disabled={loading}
                 />
-                {/* <button
-                  className={`voice-button ${isRecording ? 'recording' : ''}`}
-                  onClick={toggleVoiceRecording}
-                  disabled={loading}
-                  title={isRecording ? "Stop recording" : "Start voice input"}
-                >
-                  {isRecording ? '⏹️' : '🎤'}
-                </button> */}
               </div>
               {error && error.includes('network') && (
                 <div style={{marginTop: '10px', padding: '10px', backgroundColor: '#f0f0f0', borderRadius: '5px', fontSize: '12px'}}>
@@ -460,7 +461,7 @@ function ChatForm() {
           </>
         )}
 
-        {result && !bulkMode && (
+        {result && bulkMode === false && (
           <div className="results-section">
             <div className="single-result">
               <h3>Analysis Results {result.isOffline && <span className="offline-indicator">(Offline Mode)</span>}</h3>
@@ -492,8 +493,8 @@ function ChatForm() {
           </div>
         )}
 
-        {/* Show analysis history ONLY in single message mode */}
-        {!bulkMode && <AnalysisHistory maxItems={5} />}
+        {/* Show analysis history in single message and voice modes */}
+        {bulkMode !== true && <AnalysisHistory maxItems={5} />}
       </div>
     </div>
   );

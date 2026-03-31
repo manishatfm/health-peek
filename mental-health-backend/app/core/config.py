@@ -35,6 +35,9 @@ class Settings:
     SENTIMENT_MODEL = "j-hartmann/emotion-english-distilroberta-base"
     EMOTION_MODEL = "cardiffnlp/twitter-roberta-base-sentiment-latest"
     
+    # LLM Configuration (Groq — free tier at console.groq.com)
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+
     # File Upload Configuration
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
     ALLOWED_FILE_TYPES = ["text/plain", "application/json", "text/csv"]

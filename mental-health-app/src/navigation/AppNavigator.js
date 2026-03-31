@@ -30,6 +30,7 @@ import BlogDetailScreen from '../screens/blogs/BlogDetailScreen';
 import AdminBlogScreen from '../screens/blogs/AdminBlogScreen';
 import ExportScreen from '../screens/export/ExportScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import CompanionScreen from '../screens/companion/CompanionScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -96,9 +97,23 @@ function MoreStack() {
   );
 }
 
+// -- Companion Stack --
+function CompanionStack() {
+  return (
+    <Stack.Navigator screenOptions={screenOptions}>
+      <Stack.Screen
+        name="CompanionMain"
+        component={CompanionScreen}
+        options={{ headerTitle: () => <LogoTitle title="Companion" /> }}
+      />
+    </Stack.Navigator>
+  );
+}
+
 const TAB_ICONS = {
   Analyze: 'manage-search',
   Dashboard: 'insert-chart-outlined',
+  Companion: 'chat',
   Blogs: 'article',
   More: 'person-outline',
 };
@@ -149,6 +164,7 @@ export default function AppNavigator() {
     >
       <Tab.Screen name="Analyze" component={AnalyzeStack} />
       <Tab.Screen name="Dashboard" component={DashboardStack} />
+      <Tab.Screen name="Companion" component={CompanionStack} options={{ tabBarLabel: 'Companion' }} />
       <Tab.Screen name="Blogs" component={BlogStack} options={{ tabBarLabel: 'Articles' }} />
       <Tab.Screen name="More" component={MoreStack} />
     </Tab.Navigator>

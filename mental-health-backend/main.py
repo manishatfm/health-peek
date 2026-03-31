@@ -12,7 +12,7 @@ import logging
 # Import modules
 from app.core.config import settings
 from app.core.database import connect_to_mongo, close_mongo_connection
-from app.routers import auth, analysis, dashboard, blogs, voice
+from app.routers import auth, analysis, dashboard, blogs, voice, companion
 from app.services.sentiment_service import sentiment_service
 from app.utils.logging import setup_logging
 
@@ -86,6 +86,7 @@ app.include_router(analysis.router)
 app.include_router(dashboard.router)
 app.include_router(blogs.router)
 app.include_router(voice.router)
+app.include_router(companion.router)
 
 # Legacy endpoint compatibility
 @app.post("/analyze")
