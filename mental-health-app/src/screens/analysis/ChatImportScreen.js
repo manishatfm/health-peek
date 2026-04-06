@@ -23,6 +23,33 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
+const LANGUAGE_OPTIONS = [
+  { code: '',          label: '🌐 Auto-detect' },
+  // Indian languages
+  { code: 'hinglish',  label: '🇮🇳 Hinglish (WhatsApp Hindi-English)' },
+  { code: 'hi',        label: '🇮🇳 Hindi' },
+  { code: 'bn',        label: '🇮🇳 Bengali' },
+  { code: 'ta',        label: '🇮🇳 Tamil' },
+  { code: 'te',        label: '🇮🇳 Telugu' },
+  { code: 'mr',        label: '🇮🇳 Marathi' },
+  { code: 'gu',        label: '🇮🇳 Gujarati' },
+  // International
+  { code: 'es',        label: '🇪🇸 Spanish' },
+  { code: 'fr',        label: '🇫🇷 French' },
+  { code: 'de',        label: '🇩🇪 German' },
+  { code: 'pt',        label: '🇧🇷 Portuguese' },
+  { code: 'ar',        label: '🇸🇦 Arabic' },
+  { code: 'ru',        label: '🇷🇺 Russian' },
+  { code: 'ja',        label: '🇯🇵 Japanese' },
+  { code: 'zh',        label: '🇨🇳 Chinese' },
+  { code: 'ko',        label: '🇰🇷 Korean' },
+  { code: 'it',        label: '🇮🇹 Italian' },
+  { code: 'nl',        label: '🇳🇱 Dutch' },
+  { code: 'tr',        label: '🇹🇷 Turkish' },
+  { code: 'pl',        label: '🇵🇱 Polish' },
+  { code: 'en',        label: '🇬🇧 English' },
+];
+
 const WHATSAPP_STEPS = [
   { icon: 'chat', text: 'Open WhatsApp and go to the chat you want to analyze' },
   { icon: 'more-vert', text: 'Tap the 3-dot menu (⋮) at the top right' },
@@ -64,6 +91,8 @@ export default function ChatImportScreen({ navigation }) {
   const [content, setContent] = useState('');
   const [formatType, setFormatType] = useState('whatsapp');
   const [userName, setUserName] = useState('');
+  const [language, setLanguage] = useState('');
+  const [langPickerOpen, setLangPickerOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [guideExpanded, setGuideExpanded] = useState(true);
@@ -144,7 +173,8 @@ export default function ChatImportScreen({ navigation }) {
       const data = await analysisService.importChat(
         content.trim(),
         formatType,
-        userName.trim() || undefined
+        userName.trim() || undefined,
+        language || null
       );
       setResult(data);
       Alert.alert('Success', `Analyzed ${data.total_messages_analyzed || 0} messages!`);
@@ -201,6 +231,18 @@ export default function ChatImportScreen({ navigation }) {
             {result.red_flags.warnings.map((warning, i) => (
               <Text key={i} style={styles.warningText}>• {warning}</Text>
             ))}
+          </View>
+        )}
+
+        {/* Language Info */}
+        {result.language_info && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Language Detected</Text>
+            <Text style={styles.langInfoText}>
+              {result.language_info.native_name} ({result.language_info.language_name})
+              {result.language_info.region === 'india' ? '  🇮🇳 Indian' : ''}
+              {result.language_info.detected_language === 'hinglish' ? '  💬 Hinglish' : ''}
+            </Text>
           </View>
         )}
 
@@ -291,6 +333,45 @@ export default function ChatImportScreen({ navigation }) {
           )}
         </View>
       )}
+
+      {/* Language Selector */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Language (Optional)</Text>
+        <TouchableOpacity
+          style={styles.langPickerButton}
+          onPress={() => setLangPickerOpen(v => !v)}
+        >
+          <Text style={styles.langPickerButtonText}>
+            {LANGUAGE_OPTIONS.find(o => o.code === language)?.label || '🌐 Auto-detect'}
+          </Text>
+          <MaterialIcons
+            name={langPickerOpen ? 'expand-less' : 'expand-more'}
+            size={20}
+            color={COLORS.textSecondary}
+          />
+        </TouchableOpacity>
+        {langPickerOpen && (
+          <ScrollView style={styles.langList} nestedScrollEnabled maxHeight={220}>
+            {LANGUAGE_OPTIONS.map(opt => (
+              <TouchableOpacity
+                key={opt.code}
+                style={[
+                  styles.langItem,
+                  language === opt.code && styles.langItemActive,
+                ]}
+                onPress={() => { setLanguage(opt.code); setLangPickerOpen(false); }}
+              >
+                <Text style={[
+                  styles.langItemText,
+                  language === opt.code && styles.langItemTextActive,
+                ]}>
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+      </View>
 
       {/* Your Name */}
       <View style={styles.card}>
@@ -487,6 +568,30 @@ const styles = StyleSheet.create({
   sentimentPct: { ...FONTS.medium, fontSize: FONTS.sizes.sm, color: COLORS.text, width: 40, textAlign: 'right' },
   warningText: { ...FONTS.regular, fontSize: FONTS.sizes.md, color: COLORS.error, marginBottom: SPACING.xs, lineHeight: 20 },
   periodText: { ...FONTS.regular, fontSize: FONTS.sizes.md, color: COLORS.textSecondary },
+  langPickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.background,
+  },
+  langPickerButtonText: { ...FONTS.regular, fontSize: FONTS.sizes.md, color: COLORS.text },
+  langList: {
+    marginTop: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surface,
+  },
+  langItem: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm },
+  langItemActive: { backgroundColor: COLORS.primary + '20' },
+  langItemText: { ...FONTS.regular, fontSize: FONTS.sizes.md, color: COLORS.text },
+  langItemTextActive: { ...FONTS.semiBold, color: COLORS.primary },
+  langInfoText: { ...FONTS.regular, fontSize: FONTS.sizes.md, color: COLORS.textSecondary, lineHeight: 22 },
   sharedBanner: {
     flexDirection: 'row',
     alignItems: 'center',

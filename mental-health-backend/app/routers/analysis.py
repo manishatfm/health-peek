@@ -8,6 +8,7 @@ from ..services.sentiment_service import sentiment_service
 from ..services.analysis_service import analysis_service
 from ..services.chat_parser import chat_parser
 from ..services.chat_analyzer import chat_analyzer
+from ..services.language_service import language_service
 from ..core.security import get_current_user
 from ..core.database import get_database
 from datetime import datetime, timedelta
@@ -16,6 +17,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/analysis", tags=["Message Analysis"])
+
+# ── Language support endpoint ─────────────────────────────────────────────────
+
+@router.get("/languages")
+async def get_supported_languages():
+    """Return list of all supported languages for frontend dropdowns."""
+    return {
+        "languages": language_service.list_supported(),
+        "total": len(language_service.list_supported()),
+        "note": (
+            "Pass the language 'code' as the 'language' field in any analysis request. "
+            "Leave empty for auto-detection."
+        ),
+    }
 
 @router.post("/analyze", response_model=AnalysisResponse)
 async def analyze_message(
@@ -26,8 +41,11 @@ async def analyze_message(
     try:
         logger.info(f"📝 Single message analysis request from user: {current_user['user_id']}")
         
-        # Perform sentiment analysis
-        sentiment, confidence, emotions = await sentiment_service.analyze_sentiment(request.message)
+        # Perform sentiment analysis (with optional language override)
+        sentiment, confidence, emotions = await sentiment_service.analyze_sentiment(
+            request.message,
+            language=request.language
+        )
         
         # Get emoji analysis
         emoji_sentiment, emoji_confidence = sentiment_service.analyze_emoji_sentiment(request.message)
@@ -80,8 +98,10 @@ async def analyze_bulk_messages(
         saved_count = 0
         
         for idx, message in enumerate(request.messages):
-            # Perform sentiment analysis
-            sentiment, confidence, emotions = await sentiment_service.analyze_sentiment(message)
+            # Perform sentiment analysis (optional language applies to all messages)
+            sentiment, confidence, emotions = await sentiment_service.analyze_sentiment(
+                message, language=request.language
+            )
             
             # Get emoji analysis
             emoji_sentiment, emoji_confidence = sentiment_service.analyze_emoji_sentiment(message)
@@ -313,7 +333,8 @@ async def import_and_analyze_chat(
         # Perform comprehensive analysis
         analysis = chat_analyzer.analyze_conversation(
             messages=messages,
-            current_user_name=request.current_user_name
+            current_user_name=request.current_user_name,
+            language=request.language,
         )
         
         # Save comprehensive chat analysis to chat_analyses collection
@@ -398,8 +419,11 @@ async def import_and_analyze_chat(
                         skipped_short_messages += 1
                         continue
                 
-                # Analyze individual message sentiment
-                sentiment, confidence, emotions = await sentiment_service.analyze_sentiment(msg['message'])
+                # Analyze individual message sentiment (use detected language)
+                detected_lang = analysis.get('language_info', {}).get('detected_language')
+                sentiment, confidence, emotions = await sentiment_service.analyze_sentiment(
+                    msg['message'], language=detected_lang
+                )
                 
                 # Skip if confidence is too low (likely neutral filler messages)
                 if sentiment == "neutral" and confidence < 0.6:
@@ -449,6 +473,7 @@ async def import_and_analyze_chat(
             red_flags=analysis['red_flags'],
             emoji_stats=analysis['emoji_stats'],
             time_analysis=analysis['time_analysis'],
+            language_info=analysis.get('language_info', {'detected_language': 'en', 'language_name': 'English', 'native_name': 'English', 'region': 'international', 'script': 'latin'}),
             conversation_period=analysis['conversation_period'],
             total_messages_analyzed=len(messages),
             format_detected=detected_format

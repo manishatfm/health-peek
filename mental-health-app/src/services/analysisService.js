@@ -1,8 +1,10 @@
 import api from './api';
 
 const analysisService = {
-  async analyzeMessage(message) {
-    return api.post('/analysis/analyze', { message });
+  async analyzeMessage(message, language = null) {
+    const body = { message };
+    if (language) body.language = language;
+    return api.post('/analysis/analyze', body);
   },
 
   async analyzeBulkMessages(messages) {
@@ -25,12 +27,14 @@ const analysisService = {
     return api.delete(`/analysis/history/by-date/${date}`);
   },
 
-  async importChat(content, formatType, currentUserName) {
-    return api.post('/analysis/import-chat', {
+  async importChat(content, formatType, currentUserName, language = null) {
+    const body = {
       content,
       format_type: formatType,
       current_user_name: currentUserName,
-    });
+    };
+    if (language) body.language = language;
+    return api.post('/analysis/import-chat', body);
   },
 
   async getChatHistory(limit = 20, offset = 0) {

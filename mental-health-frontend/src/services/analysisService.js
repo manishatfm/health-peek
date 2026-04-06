@@ -2,11 +2,18 @@ import { ApiService } from './base';
 
 export class AnalysisService extends ApiService {
   // Single message analysis
-  async analyzeMessage(message) {
+  async analyzeMessage(message, language = null) {
+    const body = { message };
+    if (language) body.language = language;
     return this.request('/analysis/analyze', {
       method: 'POST',
-      body: JSON.stringify({ message }),
+      body: JSON.stringify(body),
     });
+  }
+
+  // Get supported languages for UI dropdowns
+  async getSupportedLanguages() {
+    return this.request('/analysis/languages');
   }
 
   // Bulk message analysis

@@ -1,13 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { analysisService } from '../../services';
 import { useAnalysis } from '../../context/AnalysisContext';
 import { LoadingSpinner, ErrorMessage } from '../common';
 import './ChatImport.css';
 
+// Language options: 6 Indian + 13 international + Hinglish + auto-detect
+const LANGUAGE_OPTIONS = [
+  { code: '', label: '🌐 Auto-detect', group: 'Auto' },
+  // ── Indian & Hinglish ──────────────────────────────────────
+  { code: 'hinglish', label: '🇮🇳 Hinglish (WhatsApp Hindi-English)', group: 'Indian' },
+  { code: 'hi',       label: '🇮🇳 Hindi (हिन्दी)',                    group: 'Indian' },
+  { code: 'bn',       label: '🇮🇳 Bengali (বাংলা)',                   group: 'Indian' },
+  { code: 'ta',       label: '🇮🇳 Tamil (தமிழ்)',                    group: 'Indian' },
+  { code: 'te',       label: '🇮🇳 Telugu (తెలుగు)',                  group: 'Indian' },
+  { code: 'mr',       label: '🇮🇳 Marathi (मराठी)',                  group: 'Indian' },
+  { code: 'gu',       label: '🇮🇳 Gujarati (ગુજરાતી)',               group: 'Indian' },
+  // ── International ─────────────────────────────────────────
+  { code: 'en',  label: '🇬🇧 English',    group: 'International' },
+  { code: 'es',  label: '🇪🇸 Spanish',    group: 'International' },
+  { code: 'fr',  label: '🇫🇷 French',     group: 'International' },
+  { code: 'de',  label: '🇩🇪 German',     group: 'International' },
+  { code: 'pt',  label: '🇧🇷 Portuguese', group: 'International' },
+  { code: 'ar',  label: '🇸🇦 Arabic',     group: 'International' },
+  { code: 'ru',  label: '🇷🇺 Russian',    group: 'International' },
+  { code: 'ja',  label: '🇯🇵 Japanese',   group: 'International' },
+  { code: 'zh',  label: '🇨🇳 Chinese',    group: 'International' },
+  { code: 'ko',  label: '🇰🇷 Korean',     group: 'International' },
+  { code: 'it',  label: '🇮🇹 Italian',    group: 'International' },
+  { code: 'nl',  label: '🇳🇱 Dutch',      group: 'International' },
+  { code: 'tr',  label: '🇹🇷 Turkish',    group: 'International' },
+  { code: 'pl',  label: '🇵🇱 Polish',     group: 'International' },
+];
+
 const ChatImport = ({ onImportSuccess }) => {
   const [chatContent, setChatContent] = useState('');
   const [formatType, setFormatType] = useState('');
   const [userName, setUserName] = useState('');
+  const [language, setLanguage] = useState('');   // '' = auto-detect
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [error, setError] = useState(null);
@@ -50,7 +79,8 @@ const ChatImport = ({ onImportSuccess }) => {
       const result = await analysisService.importChat({
         content: chatContent,
         format_type: formatType || null,
-        current_user_name: userName.trim() || null
+        current_user_name: userName.trim() || null,
+        language: language || null,          // null = auto-detect
       });
 
       setAnalysis(result);
@@ -72,6 +102,7 @@ const ChatImport = ({ onImportSuccess }) => {
     setChatContent('');
     setFormatType('');
     setUserName('');
+    setLanguage('');
     setFileInfo(null);
     setAnalysis(null);
     setError(null);
@@ -157,6 +188,21 @@ Examples:
               </div>
 
               <div className="input-group small">
+                <label>Language (optional):</label>
+                <select
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  disabled={isAnalyzing}
+                >
+                  {LANGUAGE_OPTIONS.map(opt => (
+                    <option key={opt.code} value={opt.code}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="input-group small">
                 <label>Your Name (optional):</label>
                 <input
                   type="text"
@@ -225,6 +271,24 @@ Examples:
             Detected Format: <strong>{analysis.format_detected}</strong> | 
             Messages Analyzed: <strong>{formatNumber(analysis.total_messages_analyzed)}</strong>
           </div>
+
+          {/* Language Info */}
+          {analysis.language_info && (
+            <div className="info-badge language-badge">
+              🌐 Language: <strong>
+                {analysis.language_info.native_name || analysis.language_info.language_name}
+                {analysis.language_info.detected_language !== 'en' && analysis.language_info.detected_language !== 'hinglish'
+                  ? ` (${analysis.language_info.language_name})`
+                  : ''}
+              </strong>
+              {analysis.language_info.region === 'indian' && (
+                <span className="language-tag indian"> 🇮🇳 Indian</span>
+              )}
+              {analysis.language_info.detected_language === 'hinglish' && (
+                <span className="language-tag hinglish"> 💬 Hinglish Supported</span>
+              )}
+            </div>
+          )}
 
           {/* Conversation Period */}
           {analysis.conversation_period && (

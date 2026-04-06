@@ -4,9 +4,35 @@ import { useAnalysis } from '../../context/AnalysisContext';
 import { LoadingSpinner, ErrorMessage } from '../common';
 import './MessageAnalyzer.css';
 
+const LANGUAGE_OPTIONS = [
+  { code: '', label: '🌐 Auto-detect' },
+  { code: 'hinglish', label: '🇮🇳 Hinglish' },
+  { code: 'hi', label: '🇮🇳 Hindi (हिन्दी)' },
+  { code: 'bn', label: '🇮🇳 Bengali (বাংলা)' },
+  { code: 'ta', label: '🇮🇳 Tamil (தமிழ்)' },
+  { code: 'te', label: '🇮🇳 Telugu (తెలుగు)' },
+  { code: 'mr', label: '🇮🇳 Marathi (मराठी)' },
+  { code: 'gu', label: '🇮🇳 Gujarati (ગુજરાતી)' },
+  { code: 'en', label: '🇬🇧 English' },
+  { code: 'es', label: '🇪🇸 Spanish' },
+  { code: 'fr', label: '🇫🇷 French' },
+  { code: 'de', label: '🇩🇪 German' },
+  { code: 'pt', label: '🇧🇷 Portuguese' },
+  { code: 'ar', label: '🇸🇦 Arabic' },
+  { code: 'ru', label: '🇷🇺 Russian' },
+  { code: 'ja', label: '🇯🇵 Japanese' },
+  { code: 'zh', label: '🇨🇳 Chinese' },
+  { code: 'ko', label: '🇰🇷 Korean' },
+  { code: 'it', label: '🇮🇹 Italian' },
+  { code: 'nl', label: '🇳🇱 Dutch' },
+  { code: 'tr', label: '🇹🇷 Turkish' },
+  { code: 'pl', label: '🇵🇱 Polish' },
+];
+
 const MessageAnalyzer = ({ onAnalysisComplete }) => {
   const { addAnalysis } = useAnalysis();
   const [message, setMessage] = useState('');
+  const [language, setLanguage] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -19,7 +45,7 @@ const MessageAnalyzer = ({ onAnalysisComplete }) => {
     setError(null);
     
     try {
-      const analysis = await analysisService.analyzeMessage(message);
+      const analysis = await analysisService.analyzeMessage(message, language || null);
       setResult(analysis);
       
       // Add to global analysis history
@@ -40,6 +66,7 @@ const MessageAnalyzer = ({ onAnalysisComplete }) => {
 
   const handleClear = () => {
     setMessage('');
+    setLanguage('');
     setResult(null);
     setError(null);
   };
@@ -77,6 +104,21 @@ const MessageAnalyzer = ({ onAnalysisComplete }) => {
             </div>
           </div>
           
+          <div className="input-group language-select-group">
+            <label htmlFor="language-select">🌐 Language (optional):</label>
+            <select
+              id="language-select"
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              disabled={isAnalyzing}
+              className="language-select"
+            >
+              {LANGUAGE_OPTIONS.map(opt => (
+                <option key={opt.code} value={opt.code}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+
           <div className="form-actions">
             <button 
               type="submit" 

@@ -6,14 +6,17 @@ Provides comprehensive analysis like ChatRecap AI:
 - Sentiment and emotional tone analysis
 - Red flag detection (drop in replies, low-investment patterns)
 - Message counts, emoji usage, positive/negative text ratios
+- Multilingual support: Hinglish, 6 Indian languages, 13 international languages
 """
 
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 from datetime import datetime, timedelta
 from collections import Counter, defaultdict
 import re
 import logging
 import emoji
+
+from .language_service import language_service
 
 logger = logging.getLogger(__name__)
 
@@ -27,50 +30,54 @@ class ChatAnalyzer:
     def analyze_conversation(
         self,
         messages: List[Dict],
-        current_user_name: str = None
+        current_user_name: str = None,
+        language: Optional[str] = None,
     ) -> Dict:
         """
-        Perform comprehensive analysis on a conversation
-        
+        Perform comprehensive analysis on a conversation.
+
         Args:
-            messages: List of message dicts with timestamp, sender, message
-            current_user_name: Name of the current user (to distinguish "you" vs "other")
-        
+            messages:          List of message dicts (timestamp, sender, message)
+            current_user_name: Name of the current user ("you" vs "other")
+            language:          Optional ISO lang code to override auto-detection
+
         Returns:
-            Comprehensive analysis dictionary
+            Comprehensive analysis dictionary (now includes language_info)
         """
         if not messages:
             return self._empty_analysis()
-        
-        # Sort messages by timestamp
-        messages = sorted(messages, key=lambda x: x['timestamp'])
-        
-        # Identify participants
+
+        messages = sorted(messages, key=lambda x: x["timestamp"])
         participants = self._identify_participants(messages, current_user_name)
-        
-        # Run all analysis modules
-        basic_stats = self._analyze_basic_stats(messages, participants)
-        patterns = self._analyze_messaging_patterns(messages, participants)
-        engagement = self._analyze_engagement_metrics(messages, participants)
-        sentiment_analysis = self._analyze_sentiment_distribution(messages, participants)
-        red_flags = self._detect_red_flags(messages, participants, patterns, engagement)
-        emoji_stats = self._analyze_emojis(messages, participants)
-        time_analysis = self._analyze_time_patterns(messages, participants)
-        
+
+        # ── Language detection ────────────────────────────────────────────
+        detected_language = self._detect_conversation_language(messages, language)
+
+        # ── Analysis modules ──────────────────────────────────────────────
+        basic_stats    = self._analyze_basic_stats(messages, participants)
+        patterns       = self._analyze_messaging_patterns(messages, participants)
+        engagement     = self._analyze_engagement_metrics(messages, participants)
+        sentiment_ana  = self._analyze_sentiment_distribution(messages, participants, detected_language)
+        red_flags      = self._detect_red_flags(messages, participants, patterns, engagement)
+        emoji_stats    = self._analyze_emojis(messages, participants)
+        time_analysis  = self._analyze_time_patterns(messages, participants)
+        lang_info      = self._build_language_info(detected_language)
+
         return {
-            'participants': participants,
-            'basic_stats': basic_stats,
-            'messaging_patterns': patterns,
-            'engagement_metrics': engagement,
-            'sentiment_analysis': sentiment_analysis,
-            'red_flags': red_flags,
-            'emoji_stats': emoji_stats,
-            'time_analysis': time_analysis,
-            'conversation_period': {
-                'start': messages[0]['timestamp'].isoformat(),
-                'end': messages[-1]['timestamp'].isoformat(),
-                'duration_days': (messages[-1]['timestamp'] - messages[0]['timestamp']).days
-            }
+            "participants":       participants,
+            "basic_stats":        basic_stats,
+            "messaging_patterns": patterns,
+            "engagement_metrics": engagement,
+            "sentiment_analysis": sentiment_ana,
+            "red_flags":          red_flags,
+            "emoji_stats":        emoji_stats,
+            "time_analysis":      time_analysis,
+            "language_info":      lang_info,
+            "conversation_period": {
+                "start":         messages[0]["timestamp"].isoformat(),
+                "end":           messages[-1]["timestamp"].isoformat(),
+                "duration_days": (messages[-1]["timestamp"] - messages[0]["timestamp"]).days,
+            },
         }
     
     def _identify_participants(
@@ -92,6 +99,54 @@ class ChatAnalyzer:
             }
         
         return participants
+
+    # ── Language helpers ──────────────────────────────────────────────────────
+
+    def _detect_conversation_language(
+        self, messages: List[Dict], override: Optional[str] = None
+    ) -> str:
+        """
+        Detect the dominant language of the conversation by sampling up to 30
+        messages from the body of the chat (skipping very short filler messages).
+        """
+        if override and language_service.is_supported(override):
+            return override
+
+        sample_texts = []
+        for msg in messages:
+            text = msg.get("message", "").strip()
+            if len(text) > 10:
+                sample_texts.append(text)
+            if len(sample_texts) >= 30:
+                break
+
+        if not sample_texts:
+            return "en"
+
+        # Vote on language across the sample
+        lang_votes: Dict[str, int] = {}
+        for text in sample_texts:
+            lang, conf = language_service.detect_language(text)
+            if conf > 0.4:
+                lang_votes[lang] = lang_votes.get(lang, 0) + 1
+
+        if not lang_votes:
+            return "en"
+
+        dominant = max(lang_votes, key=lang_votes.__getitem__)
+        logger.info(f"Dominant conversation language: {dominant} (votes: {lang_votes})")
+        return dominant
+
+    def _build_language_info(self, lang_code: str) -> Dict:
+        info = language_service.get_language_info(lang_code)
+        return {
+            "detected_language": lang_code,
+            "language_name":     info.get("name", "English"),
+            "native_name":       info.get("native", "English"),
+            "region":            info.get("region", "international"),
+            "script":            info.get("script", "latin"),
+        }
+
     
     def _analyze_basic_stats(self, messages: List[Dict], participants: Dict) -> Dict:
         """Calculate basic statistics"""
@@ -265,56 +320,74 @@ class ChatAnalyzer:
             }
         }
     
-    def _analyze_sentiment_distribution(self, messages: List[Dict], participants: Dict) -> Dict:
-        """Analyze sentiment patterns using simple lexicon-based approach (free)"""
-        # Simple positive/negative word lists (free approach)
-        positive_words = {
+    def _analyze_sentiment_distribution(
+        self, messages: List[Dict], participants: Dict, language: str = "en"
+    ) -> Dict:
+        """
+        Analyse sentiment patterns using a multilingual lexicon-based approach.
+        Supports English, Hinglish, and all other configured languages.
+        """
+        # Get language-specific sentiment words (always includes English as base)
+        pos_words_lang, neg_words_lang = language_service.get_sentiment_words(language)
+
+        # Core English words (always kept) — merged to avoid duplicates
+        english_positive = {
             'love', 'happy', 'great', 'good', 'excellent', 'wonderful', 'amazing',
             'awesome', 'fantastic', 'perfect', 'best', 'beautiful', 'thanks', 'thank',
             'appreciate', 'joy', 'excited', 'glad', 'pleased', 'delighted', 'brilliant',
-            'yay', 'haha', 'lol', 'lmao', 'cool', 'nice', 'sweet', 'fun'
+            'yay', 'haha', 'lol', 'lmao', 'cool', 'nice', 'sweet', 'fun',
         }
-        
-        negative_words = {
+        english_negative = {
             'hate', 'sad', 'bad', 'terrible', 'awful', 'horrible', 'worst', 'angry',
             'mad', 'upset', 'annoyed', 'frustrated', 'disappointed', 'sorry', 'difficult',
             'hard', 'problem', 'issue', 'wrong', 'fail', 'failed', 'suck', 'sucks',
-            'damn', 'hell', 'fuck', 'shit', 'stupid', 'dumb', 'boring', 'bored'
+            'damn', 'hell', 'fuck', 'shit', 'stupid', 'dumb', 'boring', 'bored',
         }
-        
+
+        positive_words = set(w.lower() for w in pos_words_lang) | english_positive
+        negative_words = set(w.lower() for w in neg_words_lang) | english_negative
+
         sentiment_by_participant = {}
-        
+
         for name in participants:
             participant_msgs = [msg for msg in messages if msg['sender'] == name]
-            
-            positive_count = 0
-            negative_count = 0
-            neutral_count = 0
-            
+
+            positive_count = negative_count = neutral_count = 0
+
             for msg in participant_msgs:
                 text_lower = msg['message'].lower()
                 words = re.findall(r'\b\w+\b', text_lower)
-                
+
                 pos = sum(1 for word in words if word in positive_words)
                 neg = sum(1 for word in words if word in negative_words)
-                
+
+                # Also check full-string matches for multi-char languages (CJK, Arabic, etc.)
+                for pw in positive_words:
+                    if len(pw) > 1 and pw in text_lower:
+                        pos += 1
+                        break
+                for nw in negative_words:
+                    if len(nw) > 1 and nw in text_lower:
+                        neg += 1
+                        break
+
                 if pos > neg:
                     positive_count += 1
                 elif neg > pos:
                     negative_count += 1
                 else:
                     neutral_count += 1
-            
+
             total = len(participant_msgs)
             sentiment_by_participant[name] = {
                 'positive_messages': positive_count,
                 'negative_messages': negative_count,
-                'neutral_messages': neutral_count,
-                'positive_ratio': round(positive_count / total, 3) if total > 0 else 0,
-                'negative_ratio': round(negative_count / total, 3) if total > 0 else 0,
-                'neutral_ratio': round(neutral_count / total, 3) if total > 0 else 0
+                'neutral_messages':  neutral_count,
+                'positive_ratio':    round(positive_count / total, 3) if total > 0 else 0,
+                'negative_ratio':    round(negative_count / total, 3) if total > 0 else 0,
+                'neutral_ratio':     round(neutral_count  / total, 3) if total > 0 else 0,
             }
-        
+
         return sentiment_by_participant
     
     def _detect_red_flags(
@@ -482,6 +555,7 @@ class ChatAnalyzer:
             'red_flags': {'red_flags': [], 'warnings': [], 'total_red_flags': 0, 'total_warnings': 0},
             'emoji_stats': {},
             'time_analysis': {},
+            'language_info': {'detected_language': 'en', 'language_name': 'English', 'native_name': 'English', 'region': 'international', 'script': 'latin'},
             'conversation_period': {}
         }
 

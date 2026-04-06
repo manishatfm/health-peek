@@ -48,9 +48,11 @@ class Token(BaseModel):
 # Message Analysis Models
 class MessageRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=5000)
+    language: Optional[str] = None  # ISO language code: 'hi', 'es', 'hinglish', etc.
 
 class BulkMessageRequest(BaseModel):
     messages: List[str] = Field(..., min_items=1, max_items=100)
+    language: Optional[str] = None  # ISO language code; applied to all messages
 
 class AnalysisResponse(BaseModel):
     message: str
@@ -102,8 +104,9 @@ class SuggestionsResponse(BaseModel):
 # Chat Import Models
 class ChatImportRequest(BaseModel):
     content: str = Field(..., min_length=10)
-    format_type: Optional[str] = None  # 'whatsapp', 'telegram', 'discord', 'generic'
+    format_type: Optional[str] = None        # 'whatsapp', 'telegram', 'discord', 'generic'
     current_user_name: Optional[str] = None  # To identify "you" vs "other"
+    language: Optional[str] = None           # Force language: 'hi', 'hinglish', 'es', …
 
 class ChatMessage(BaseModel):
     timestamp: datetime
@@ -121,6 +124,7 @@ class ChatAnalysisResponse(BaseModel):
     red_flags: dict
     emoji_stats: dict
     time_analysis: dict
+    language_info: dict         # detected language metadata
     conversation_period: dict
     total_messages_analyzed: int
     format_detected: str
